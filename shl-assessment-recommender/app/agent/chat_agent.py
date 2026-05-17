@@ -95,17 +95,37 @@ class ChatAgent:
         # 5. Recommendation, Comparison, and Refinement routing
         query = latest_user_message if latest_user_message.strip() else conversation_text
         
+        # Keyword search
         keyword_items = []
         try:
             keyword_items = self.search.search(query, limit=100)
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
+            keyword_items = []
 
+        # Vector search with timeout fallback
         vector_items = []
         try:
-            vector_items = self.vector_store.search(query, limit=100)
+            import signal
+            
+            def timeout_handler(signum, frame):
+                raise TimeoutError("Vector search took too long (10s)")
+            
+            # Set 10 second timeout for vector search
+            signal.signal(signal.SIGALRM, timeout_handler)
+            signal.alarm(10)
+            
+            try:
+                vector_items = self.vector_store.search(query, limit=100)
+            finally:
+                signal.alarm(0)  # Cancel alarm
+                
+        except TimeoutError as e:
+            logger.warning(f"Vector search timeout (using keyword search only): {e}")
+            vector_items = []
         except Exception as e:
             logger.error(f"Vector search failed: {e}")
+            vector_items = []
 
         # 6. Rank Results
         ranked_items = self.ranker.rank(keyword_items, vector_items, query)

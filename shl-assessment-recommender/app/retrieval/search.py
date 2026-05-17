@@ -5,10 +5,13 @@ from app.retrieval.catalog_loader import CatalogLoader
 class CatalogSearch:
     def __init__(self):
         self.catalog = CatalogLoader().load()
+        # Ignore only ultra-generic tokens that add no value
+        # Keep domain-specific terms: assessment, test, role, developer, skills, technical
         self.ignore_tokens = {
-            "hiring", "hire", "need", "want", "assessment", "test",
-            "candidate", "role", "looking", "for", "with",
-            "and", "the", "a", "an", "to", "developer", "skills", "technical"
+            "hiring", "hire", "need", "want",
+            "candidate", "looking", "for", "with",
+            "and", "the", "a", "an", "to", "please", "can", "could", "would", "should",
+            "i", "you", "we", "they", "is", "are", "am", "be"
         }
 
     def search(self, query: str, limit: int = 20) -> list[dict]:
