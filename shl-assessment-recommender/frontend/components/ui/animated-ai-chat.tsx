@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState, useTransition } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-    CircleUserRound,
     SendIcon,
     LoaderIcon,
     Sparkles,
-    Command,
     ExternalLink,
     RefreshCw,
     AlertCircle,
@@ -84,7 +82,7 @@ interface TextareaProps
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
   ({ className, containerClassName, showRing = true, ...props }, ref) => {
-    const [isFocused, setIsFocused] = React.useState(false);
+
     
     return (
       <div className={cn("relative w-full", containerClassName)}>
@@ -98,8 +96,7 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             className
           )}
           ref={ref}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
+
           {...props}
         />
       </div>
@@ -241,6 +238,7 @@ export function AnimatedAIChat() {
             {/* Header */}
             <header className="relative z-10 w-full backdrop-blur-md bg-white/70 border-b border-green-100 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
                     <img 
                         src="/shl-logo.svg" 
                         alt="SHL Logo" 
