@@ -242,7 +242,7 @@ export function AnimatedAIChat() {
             <header className="relative z-10 w-full backdrop-blur-md bg-white/70 border-b border-green-100 px-6 py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                     <img 
-                        src="/shl-logo.png" 
+                        src="/shl-logo.svg" 
                         alt="SHL Logo" 
                         className="h-8 w-auto object-contain"
                     />
