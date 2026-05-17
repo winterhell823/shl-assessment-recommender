@@ -1,13 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useCallback, useState, useTransition } from "react";
+import { useEffect, useRef, useCallback, useState } from "react";
 import { cn } from "@/lib/utils";
 import {
-    CircleUserRound,
     SendIcon,
     LoaderIcon,
     Sparkles,
-    Command,
     ExternalLink,
     RefreshCw,
     AlertCircle,
@@ -79,13 +77,10 @@ interface CommandSuggestion {
 interface TextareaProps
   extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
   containerClassName?: string;
-  showRing?: boolean;
 }
 
 const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
-  ({ className, containerClassName, showRing = true, ...props }, ref) => {
-    const [isFocused, setIsFocused] = React.useState(false);
-    
+  ({ className, containerClassName, ...props }, ref) => {
     return (
       <div className={cn("relative w-full", containerClassName)}>
         <textarea
@@ -98,8 +93,6 @@ const Textarea = React.forwardRef<HTMLTextAreaElement, TextareaProps>(
             className
           )}
           ref={ref}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
           {...props}
         />
       </div>
@@ -124,8 +117,6 @@ export function AnimatedAIChat() {
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showCommandPalette, setShowCommandPalette] = useState(false);
-    const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { textareaRef, adjustHeight } = useAutoResizeTextarea({
@@ -221,7 +212,6 @@ export function AnimatedAIChat() {
     const selectCommandSuggestion = (suggestion: CommandSuggestion) => {
         setValue(suggestion.prefix);
         textareaRef.current?.focus();
-        setShowCommandPalette(false);
     };
 
     const resetChat = () => {
@@ -244,7 +234,7 @@ export function AnimatedAIChat() {
                     <img 
                         src="/shl-logo.svg" 
                         alt="SHL Logo" 
-                        className="h-8 w-auto object-contain"
+                        className="h-10 w-auto object-contain"
                     />
                     <div>
                         <h1 className="font-semibold text-gray-800 text-sm tracking-tight">SHL Assessment Recommender</h1>
