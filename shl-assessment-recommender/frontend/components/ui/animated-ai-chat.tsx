@@ -121,8 +121,6 @@ export function AnimatedAIChat() {
     const [chatHistory, setChatHistory] = useState<ChatMessage[]>([]);
     const [isTyping, setIsTyping] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [showCommandPalette, setShowCommandPalette] = useState(false);
-    const [activeSuggestion, setActiveSuggestion] = useState<number>(-1);
     
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const { textareaRef, adjustHeight } = useAutoResizeTextarea({
@@ -218,7 +216,6 @@ export function AnimatedAIChat() {
     const selectCommandSuggestion = (suggestion: CommandSuggestion) => {
         setValue(suggestion.prefix);
         textareaRef.current?.focus();
-        setShowCommandPalette(false);
     };
 
     const resetChat = () => {
