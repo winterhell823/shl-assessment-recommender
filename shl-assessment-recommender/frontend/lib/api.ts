@@ -12,7 +12,7 @@ export interface Message {
 
 export async function sendMessageToAPI(messages: Message[]) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
     const response = await fetch(`${apiUrl}/api/chat`, {
       method: 'POST',
       headers: {
@@ -36,7 +36,7 @@ export async function sendMessageToAPI(messages: Message[]) {
 
 export async function getRecommendations(query: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
     const response = await fetch(`${apiUrl}/api/recommendations`, {
       method: 'POST',
       headers: {
