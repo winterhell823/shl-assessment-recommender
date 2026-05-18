@@ -1,34 +1,52 @@
-from app.prompts.recommendation_prompt import RECOMMENDATION_PROMPT
-from app.prompts.comparison_prompt import COMPARISON_PROMPT
-from app.prompts.refusal_prompt import REFUSAL_PROMPT
-
 class PromptBuilder:
-    def build_recommendation_prompt(self, conversation_text: str, catalog_items: list[dict]) -> str:
-        items_str = self._format_items(catalog_items)
-        return RECOMMENDATION_PROMPT.format(
-            conversation_text=conversation_text,
-            items_str=items_str
-        ).strip()
+    def build_recommendation_prompt(
+        self,
+        conversation_text: str,
+        catalog_items: list[dict]
+    ) -> list[dict]:
 
-    def build_comparison_prompt(self, conversation_text: str, catalog_items: list[dict]) -> str:
-        items_str = self._format_items(catalog_items)
-        return COMPARISON_PROMPT.format(
-            conversation_text=conversation_text,
-            items_str=items_str
-        ).strip()
+        catalog_text = self._format_catalog(catalog_items)
 
-    def build_refusal_prompt(self, query: str, topic: str) -> str:
-        return REFUSAL_PROMPT.format(
-            query=query,
-            topic=topic
-        ).strip()
+        system_prompt = f"""
+You are an SHL assessment recommendation assistant.
 
-    def _format_items(self, catalog_items: list[dict]) -> str:
-        items_str = ""
-        for i, item in enumerate(catalog_items):
-            items_str += f"{i+1}. Name: {item.get('name')}\n"
-            items_str += f"   Type: {item.get('test_type')}\n"
-            items_str += f"   Description: {item.get('description')}\n"
-            items_str += f"   Skills: {', '.join(item.get('skills', []))}\n"
-            items_str += f"   URL: {item.get('url') or item.get('link', '')}\n\n"
-        return items_str.strip()
+Rules:
+- Only recommend assessments from the provided catalog.
+- Do not invent assessment names or URLs.
+- If the user is vague, ask one clear follow-up question.
+- If enough context is available, recommend 1 to 10 assessments.
+- Keep the reply concise and recruiter-friendly.
+- Stay focused only on SHL assessments.
+
+Available catalog items:
+{catalog_text}
+"""
+
+        user_prompt = f"""
+Conversation:
+{conversation_text}
+
+Return a helpful assistant reply.
+Do not output JSON.
+"""
+
+        return [
+            {"role": "system", "content": system_prompt.strip()},
+            {"role": "user", "content": user_prompt.strip()}
+        ]
+
+    def _format_catalog(self, items: list[dict]) -> str:
+        formatted = []
+
+        for item in items:
+            formatted.append(
+                f"""
+Name: {item.get("name")}
+URL: {item.get("url")}
+Test Type: {item.get("test_type")}
+Description: {item.get("description")}
+Skills: {", ".join(item.get("skills", []))}
+""".strip()
+            )
+
+        return "\n\n".join(formatted)
