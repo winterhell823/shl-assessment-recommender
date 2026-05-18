@@ -176,17 +176,11 @@ OUT_OF_SCOPE_PATTERNS = {
 
     "general_advice": [
         "career advice",
-        "should i",
-        "what career",
-        "which career",
         "career path",
         "career guidance",
         "future career",
-        "which field",
         "job market",
         "industry trends",
-        "best technology",
-        "which programming language",
         "resume review",
         "cv review",
         "linkedin optimization",
@@ -197,3 +191,27 @@ OUT_OF_SCOPE_PATTERNS = {
         "investment advice"
     ]
 }
+
+# Safe allowlist - queries that contain these keywords are ALWAYS safe recommendations
+RECOMMENDATION_ALLOWLIST = [
+    "assessment",
+    "assessments",
+    "test",
+    "tests",
+    "developer",
+    "engineer",
+    "frontend",
+    "backend",
+    "java",
+    "python",
+    "react",
+    "devops",
+    "accountant",
+    "accounting",
+    "banking",
+    "customer support",
+    "sales",
+    "manager",
+    "supervisor",
+    "director"
+]
