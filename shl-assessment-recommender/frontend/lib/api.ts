@@ -37,7 +37,16 @@ export async function sendMessageToAPI(messages: Message[]) {
     const data = await response.json()
     console.log('[API] Response data:', data)
     return data
-  } catcole.log('[API] getRecommendations called with URL:', apiUrl)
+  } catch (error) {
+    console.error('[API] Error in sendMessageToAPI:', error)
+    throw error
+  }
+}
+
+export async function getRecommendations(query: string) {
+  try {
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
+    console.log('[API] getRecommendations called with URL:', apiUrl)
     console.log('[API] Query:', query)
     
     const response = await fetch(`${apiUrl}/api/recommendations`, {
@@ -60,16 +69,7 @@ export async function sendMessageToAPI(messages: Message[]) {
     console.log('[API] Response data:', data)
     return data
   } catch (error) {
-    console.error('[API] ringify({ query }),
-    })
-
-    if (!response.ok) {
-      throw new Error(`API error: ${response.statusText}`)
-    }
-
-    return await response.json()
-  } catch (error) {
-    console.error('Failed to get recommendations:', error)
+    console.error('[API] Error in getRecommendations:', error)
     throw error
   }
 }
