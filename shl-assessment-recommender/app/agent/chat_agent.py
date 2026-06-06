@@ -1,3 +1,5 @@
+from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
+
 from app.schemas import ChatRequest, ChatResponse, Recommendation
 from app.agent.guardrails import Guardrails
 from app.agent.context_extractor import ContextExtractor
@@ -106,20 +108,14 @@ class ChatAgent:
         # Vector search with timeout fallback
         vector_items = []
         try:
-            import signal
-            
-            def timeout_handler(signum, frame):
-                raise TimeoutError("Vector search took too long (10s)")
-            
-            # Set 10 second timeout for vector search
-            signal.signal(signal.SIGALRM, timeout_handler)
-            signal.alarm(10)
-            
-            try:
-                vector_items = self.vector_store.search(query, limit=100)
-            finally:
-                signal.alarm(0)  # Cancel alarm
-                
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.vector_store.search, query, 100)
+                try:
+                    vector_items = future.result(timeout=10)
+                except FuturesTimeoutError as e:
+                    future.cancel()
+                    raise TimeoutError("Vector search took too long (10s)") from e
+
         except TimeoutError as e:
             logger.warning(f"Vector search timeout (using keyword search only): {e}")
             vector_items = []
