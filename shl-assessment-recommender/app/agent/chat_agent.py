@@ -20,12 +20,22 @@ class ChatAgent:
         self.guardrails = Guardrails()
         self.extractor = ContextExtractor()
         self.intent_classifier = IntentClassifier()
-        self.search = CatalogSearch()
-        self.vector_store = VectorStore()
+        self.search = None
+        self.vector_store = None
         self.ranker = Ranker()
         self.relevance_filter = RelevanceFilter()
         self.prompt_builder = PromptBuilder()
         self.llm = LLMClient()
+
+    def _get_search(self) -> CatalogSearch:
+        if self.search is None:
+            self.search = CatalogSearch()
+        return self.search
+
+    def _get_vector_store(self) -> VectorStore:
+        if self.vector_store is None:
+            self.vector_store = VectorStore()
+        return self.vector_store
 
     def handle_chat(self, request: ChatRequest) -> ChatResponse:
         latest_user_message = self.extractor.get_latest_user_message(request.messages)
@@ -100,7 +110,7 @@ class ChatAgent:
         # Keyword search
         keyword_items = []
         try:
-            keyword_items = self.search.search(query, limit=100)
+            keyword_items = self._get_search().search(query, limit=100)
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
             keyword_items = []
@@ -109,7 +119,7 @@ class ChatAgent:
         vector_items = []
         try:
             with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(self.vector_store.search, query, 100)
+                future = executor.submit(self._get_vector_store().search, query, 100)
                 try:
                     vector_items = future.result(timeout=10)
                 except FuturesTimeoutError as e:
