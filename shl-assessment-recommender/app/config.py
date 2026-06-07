@@ -10,6 +10,8 @@ class Settings(BaseSettings):
 
     catalog_path: str = "app/data/shl_catalog_clean.json"
     max_recommendations: int = 10
+    enable_vector_search: bool = False
+    vector_search_timeout_seconds: int = 10
 
     class Config:
         env_file = ".env"

@@ -10,6 +10,7 @@ from app.retrieval.vector_store import VectorStore
 from app.retrieval.ranker import Ranker
 from app.retrieval.relevance_filter import RelevanceFilter
 from app.llm.llm_client import LLMClient
+from app.config import settings
 from app.utils.constants import IntentType
 from app.utils.logger import get_logger
 
@@ -26,6 +27,8 @@ class ChatAgent:
         self.relevance_filter = RelevanceFilter()
         self.prompt_builder = PromptBuilder()
         self.llm = LLMClient()
+        self.enable_vector_search = settings.enable_vector_search
+        self.vector_timeout_seconds = settings.vector_search_timeout_seconds
 
     def _get_search(self) -> CatalogSearch:
         if self.search is None:
@@ -117,21 +120,26 @@ class ChatAgent:
 
         # Vector search with timeout fallback
         vector_items = []
-        try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(self._get_vector_store().search, query, 100)
-                try:
-                    vector_items = future.result(timeout=10)
-                except FuturesTimeoutError as e:
-                    future.cancel()
-                    raise TimeoutError("Vector search took too long (10s)") from e
+        if self.enable_vector_search:
+            try:
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(self._get_vector_store().search, query, 100)
+                    try:
+                        vector_items = future.result(timeout=self.vector_timeout_seconds)
+                    except FuturesTimeoutError as e:
+                        future.cancel()
+                        raise TimeoutError(
+                            f"Vector search took too long ({self.vector_timeout_seconds}s)"
+                        ) from e
 
-        except TimeoutError as e:
-            logger.warning(f"Vector search timeout (using keyword search only): {e}")
-            vector_items = []
-        except Exception as e:
-            logger.error(f"Vector search failed: {e}")
-            vector_items = []
+            except TimeoutError as e:
+                logger.warning(f"Vector search timeout (using keyword search only): {e}")
+                vector_items = []
+            except Exception as e:
+                logger.error(f"Vector search failed: {e}")
+                vector_items = []
+        else:
+            logger.info("Vector search disabled; using keyword search only")
 
         # 6. Rank Results
         ranked_items = self.ranker.rank(keyword_items, vector_items, query)
