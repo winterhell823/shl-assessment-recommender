@@ -17,7 +17,7 @@ export async function sendMessageToAPI(messages: Message[]) {
     console.log('[API] sendMessageToAPI called with URL:', API_BASE_URL)
     console.log('[API] Sending messages:', messages)
 
-    const response = await fetch('/api/chat', {
+    const response = await fetch(`${API_BASE_URL}/api/chat`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ export async function getRecommendations(query: string) {
     console.log('[API] getRecommendations called with URL:', API_BASE_URL)
     console.log('[API] Query:', query)
 
-    const response = await fetch('/api/recommendations', {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

@@ -2,14 +2,6 @@
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.BACKEND_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'}/api/:path*`,
-      },
-    ]
-  },
 }
 
 module.exports = nextConfig
