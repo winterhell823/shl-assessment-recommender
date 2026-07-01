@@ -124,23 +124,24 @@ class ChatAgent:
             logger.error(f"Keyword search failed: {e}")
             keyword_items = []
 
-        # Vector search with timeout fallback
+        # Vector search with timeout fallback, but keep it lightweight and disabled on low-memory deployments.
         vector_items = []
-        try:
-            with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(self.vector_store.search, query, 200)
-                try:
-                    vector_items = future.result(timeout=10)
-                except FuturesTimeoutError as e:
-                    future.cancel()
-                    raise TimeoutError("Vector search took too long (10s)") from e
+        if os.environ.get("SHL_ENABLE_VECTOR_SEARCH", "0") == "1":
+            try:
+                with ThreadPoolExecutor(max_workers=1) as executor:
+                    future = executor.submit(self.vector_store.search, query, 80)
+                    try:
+                        vector_items = future.result(timeout=5)
+                    except FuturesTimeoutError as e:
+                        future.cancel()
+                        raise TimeoutError("Vector search took too long (5s)") from e
 
-        except TimeoutError as e:
-            logger.warning(f"Vector search timeout (using keyword search only): {e}")
-            vector_items = []
-        except Exception as e:
-            logger.error(f"Vector search failed: {e}")
-            vector_items = []
+            except TimeoutError as e:
+                logger.warning(f"Vector search timeout (using keyword search only): {e}")
+                vector_items = []
+            except Exception as e:
+                logger.error(f"Vector search failed: {e}")
+                vector_items = []
 
         # 6. Rank Results
         ranked_items = self.ranker.rank(keyword_items, vector_items, query)

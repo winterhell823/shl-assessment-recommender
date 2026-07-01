@@ -1,5 +1,4 @@
 import os
-from groq import Groq
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -10,10 +9,13 @@ class LLMClient:
         self.api_key = os.getenv("GROQ_API_KEY")
         self.model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
 
-        if not self.api_key:
-            self.client = None
-        else:
-            self.client = Groq(api_key=self.api_key)
+        self.client = None
+        if self.api_key:
+            try:
+                from groq import Groq
+                self.client = Groq(api_key=self.api_key)
+            except Exception as exc:
+                print(f"Groq client init failed: {exc}")
 
     def generate(self, messages: list[dict] | str) -> str:
         if not self.client:

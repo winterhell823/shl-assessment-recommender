@@ -113,12 +113,4 @@ class Ranker:
 
         scored_items.sort(key=lambda x: x[0], reverse=True)
 
-        # Print top 20 ranked item names and scores during development
-        print(f"\n[DEBUG] Ranker Top 20 for query: '{query}'")
-        print(f"{'-'*60}")
-        for idx, (score, item) in enumerate(scored_items[:20], 1):
-            print(f"{idx:2d}. [Score: {score:4d}] {item.get('name')}")
-        print(f"{'-'*60}\n")
-
-        # Return full ranked candidates for the relevance filter
         return [item for _, item in scored_items]
