@@ -10,13 +10,14 @@ export interface Message {
   content: string;
 }
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
+
 export async function sendMessageToAPI(messages: Message[]) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
-    console.log('[API] sendMessageToAPI called with URL:', apiUrl)
+    console.log('[API] sendMessageToAPI called with URL:', API_BASE_URL)
     console.log('[API] Sending messages:', messages)
-    
-    const response = await fetch(`${apiUrl}/api/chat`, {
+
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,7 +28,7 @@ export async function sendMessageToAPI(messages: Message[]) {
     })
 
     console.log('[API] Response status:', response.status, response.statusText)
-    
+
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[API] Error response body:', errorText)
@@ -45,11 +46,10 @@ export async function sendMessageToAPI(messages: Message[]) {
 
 export async function getRecommendations(query: string) {
   try {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
-    console.log('[API] getRecommendations called with URL:', apiUrl)
+    console.log('[API] getRecommendations called with URL:', API_BASE_URL)
     console.log('[API] Query:', query)
-    
-    const response = await fetch(`${apiUrl}/api/recommendations`, {
+
+    const response = await fetch('/api/recommendations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export async function getRecommendations(query: string) {
     })
 
     console.log('[API] Response status:', response.status, response.statusText)
-    
+
     if (!response.ok) {
       const errorText = await response.text()
       console.error('[API] Error response body:', errorText)
