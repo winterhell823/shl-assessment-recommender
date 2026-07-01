@@ -1,3 +1,4 @@
+import os
 from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
 from app.schemas import ChatRequest, ChatResponse, Recommendation
