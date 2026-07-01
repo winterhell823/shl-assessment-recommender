@@ -1,0 +1,85 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-border: 130 15% 88%;
+  --color-input: 130 15% 88%;
+  --color-ring: 142 76% 36%;
+  --color-background: 0 0% 100%;
+  --color-foreground: 0 0% 0%;
+  --color-primary: 142 76% 36%;
+  --color-primary-foreground: 0 0% 100%;
+  --color-secondary: 120 100% 50%;
+  --color-secondary-foreground: 0 0% 100%;
+  --color-destructive: 0 84% 60%;
+  --color-destructive-foreground: 0 0% 100%;
+  --color-muted: 0 0% 96%;
+  --color-muted-foreground: 0 0% 40%;
+  --color-accent: 142 76% 36%;
+  --color-accent-foreground: 0 0% 100%;
+  --color-popover: 0 0% 100%;
+  --color-popover-foreground: 0 0% 0%;
+  --color-card: 0 0% 100%;
+  --color-card-foreground: 0 0% 0%;
+}
+
+.dark {
+  --color-border: 130 15% 20%;
+  --color-input: 130 15% 20%;
+  --color-ring: 142 76% 36%;
+  --color-background: 0 0% 0%;
+  --color-foreground: 0 0% 100%;
+  --color-primary: 142 76% 36%;
+  --color-primary-foreground: 0 0% 0%;
+  --color-secondary: 120 100% 50%;
+  --color-secondary-foreground: 0 0% 0%;
+  --color-destructive: 0 84% 60%;
+  --color-destructive-foreground: 0 0% 0%;
+  --color-muted: 0 0% 20%;
+  --color-muted-foreground: 0 0% 60%;
+  --color-accent: 142 76% 36%;
+  --color-accent-foreground: 0 0% 0%;
+  --color-popover: 0 0% 0%;
+  --color-popover-foreground: 0 0% 100%;
+  --color-card: 0 0% 0%;
+  --color-card-foreground: 0 0% 100%;
+}
+
+* {
+  @apply border-border;
+}
+
+body {
+  @apply bg-background text-foreground;
+}
+
+.lab-bg::before {
+  overflow: hidden;
+  max-width: 100vw;
+  max-height: 100vh;
+  box-sizing: border-box;
+}
+
+/* Smooth scrolling */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-background;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary rounded-full;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-primary/80;
+}
