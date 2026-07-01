@@ -20,12 +20,28 @@ class ChatAgent:
         self.guardrails = Guardrails()
         self.extractor = ContextExtractor()
         self.intent_classifier = IntentClassifier()
-        self.search = CatalogSearch()
-        self.vector_store = VectorStore()
-        self.ranker = Ranker()
-        self.relevance_filter = RelevanceFilter()
-        self.prompt_builder = PromptBuilder()
-        self.llm = LLMClient()
+        self.search = None
+        self.vector_store = None
+        self.ranker = None
+        self.relevance_filter = None
+        self.prompt_builder = None
+        self.llm = None
+
+    def _ensure_retrieval_components(self):
+        if self.search is None:
+            self.search = CatalogSearch()
+        if self.vector_store is None:
+            self.vector_store = VectorStore()
+        if self.ranker is None:
+            self.ranker = Ranker()
+        if self.relevance_filter is None:
+            self.relevance_filter = RelevanceFilter()
+        if self.prompt_builder is None:
+            self.prompt_builder = PromptBuilder()
+
+    def _ensure_llm(self):
+        if self.llm is None:
+            self.llm = LLMClient()
 
     def handle_chat(self, request: ChatRequest) -> ChatResponse:
         latest_user_message = self.extractor.get_latest_user_message(request.messages)
@@ -54,6 +70,7 @@ class ChatAgent:
         if intent == IntentType.REFUSE:
             topic = self.intent_classifier.detect_out_of_scope_topic(latest_user_message) or "General out-of-scope"
             try:
+                self._ensure_llm()
                 refusal_prompt = self.prompt_builder.build_refusal_prompt(latest_user_message, topic)
                 reply = self.llm.generate(refusal_prompt)
                 if not reply or "LLM API key is missing" in reply:
@@ -97,6 +114,8 @@ class ChatAgent:
         # 5. Recommendation, Comparison, and Refinement routing
         query = latest_user_message if latest_user_message.strip() else conversation_text
         
+        self._ensure_retrieval_components()
+
         # Keyword search
         keyword_items = []
         try:
@@ -138,6 +157,8 @@ class ChatAgent:
             )
 
         # 9. Prompt selection and LLM generation
+        self._ensure_llm()
+
         if intent == IntentType.COMPARE:
             try:
                 prompt = self.prompt_builder.build_comparison_prompt(

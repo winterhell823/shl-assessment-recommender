@@ -10,14 +10,12 @@ export interface Message {
   content: string;
 }
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || process.env.BACKEND_API_URL || 'https://shl-assessment-recommender-9czk.onrender.com'
-
 export async function sendMessageToAPI(messages: Message[]) {
   try {
-    console.log('[API] sendMessageToAPI called with URL:', API_BASE_URL)
+    console.log('[API] sendMessageToAPI called with same-origin /api/chat route')
     console.log('[API] Sending messages:', messages)
 
-    const response = await fetch(`${API_BASE_URL}/api/chat`, {
+    const response = await fetch('/api/chat', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -46,10 +44,10 @@ export async function sendMessageToAPI(messages: Message[]) {
 
 export async function getRecommendations(query: string) {
   try {
-    console.log('[API] getRecommendations called with URL:', API_BASE_URL)
+    console.log('[API] getRecommendations called with same-origin /api/recommendations route')
     console.log('[API] Query:', query)
 
-    const response = await fetch(`${API_BASE_URL}/api/recommendations`, {
+    const response = await fetch('/api/recommendations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
