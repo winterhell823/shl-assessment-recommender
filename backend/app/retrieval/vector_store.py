@@ -4,33 +4,45 @@ import threading
 from pathlib import Path
 import numpy as np
 
-# Lazy imports to make server startup fast if vector store is not initialized or used
+# Keep memory usage low by only loading the embedding model when semantic search is actually needed.
 _model = None
 _faiss = None
 _model_warmup_started = False
 
+
 def get_model():
     global _model
     if _model is None:
-        from sentence_transformers import SentenceTransformer
-        _model = SentenceTransformer("all-MiniLM-L6-v2")
+        try:
+            from sentence_transformers import SentenceTransformer
+            _model = SentenceTransformer("all-MiniLM-L6-v2")
+        except Exception as exc:
+            print(f"Embedding model load failed: {exc}")
+            _model = False
     return _model
+
 
 def get_faiss():
     global _faiss
     if _faiss is None:
-        import faiss
-        _faiss = faiss
+        try:
+            import faiss
+            _faiss = faiss
+        except Exception as exc:
+            print(f"FAISS import failed: {exc}")
+            _faiss = False
     return _faiss
 
 
 def warmup_model():
     global _model_warmup_started
-    if _model_warmup_started:
+    if _model_warmup_started or os.environ.get("SHL_DISABLE_WARMUP", "1") == "1":
         return
     _model_warmup_started = True
     try:
         model = get_model()
+        if model is False:
+            return
         model.encode(["warmup"], convert_to_numpy=True)
     except Exception:
         pass
@@ -43,7 +55,8 @@ class VectorStore:
         self.index = None
         self.metadata = []
         self._load_store()
-        threading.Thread(target=warmup_model, daemon=True).start()
+        if os.environ.get("SHL_DISABLE_WARMUP", "1") != "1":
+            threading.Thread(target=warmup_model, daemon=True).start()
 
     def _load_store(self):
         if not self.index_path.exists() or not self.metadata_path.exists():
@@ -65,16 +78,19 @@ class VectorStore:
         if self.index is None or not self.metadata or not query.strip():
             return []
 
+        model = get_model()
+        if model is False:
+            return []
+
         try:
-            model = get_model()
-            # Encode query
             query_vector = model.encode([query], convert_to_numpy=True).astype("float32")
-            
-            # Normalize vector for Cosine Similarity (since we use IndexFlatIP)
+
             faiss = get_faiss()
+            if faiss is False:
+                return []
+
             faiss.normalize_L2(query_vector)
 
-            # Search FAISS index
             k = min(limit, len(self.metadata))
             distances, indices = self.index.search(query_vector, k)
 
@@ -82,13 +98,11 @@ class VectorStore:
             for idx in indices[0]:
                 if idx < 0 or idx >= len(self.metadata):
                     continue
-                
+
                 item = self.metadata[idx]
-                
-                # Standardize url/link field
                 if "link" in item and "url" not in item:
                     item["url"] = item["link"]
-                
+
                 results.append(item)
 
             return results
