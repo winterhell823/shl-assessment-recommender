@@ -37,8 +37,3 @@ def root():
         "health": "/health",
         "chat": "/chat"
     }
-
-
-@app.head("/")
-def root_head():
-    return ""

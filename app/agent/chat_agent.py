@@ -10,7 +10,6 @@ from app.retrieval.vector_store import VectorStore
 from app.retrieval.ranker import Ranker
 from app.retrieval.relevance_filter import RelevanceFilter
 from app.llm.llm_client import LLMClient
-from app.config import settings
 from app.utils.constants import IntentType
 from app.utils.logger import get_logger
 
@@ -21,24 +20,12 @@ class ChatAgent:
         self.guardrails = Guardrails()
         self.extractor = ContextExtractor()
         self.intent_classifier = IntentClassifier()
-        self.search = None
-        self.vector_store = None
+        self.search = CatalogSearch()
+        self.vector_store = VectorStore()
         self.ranker = Ranker()
         self.relevance_filter = RelevanceFilter()
         self.prompt_builder = PromptBuilder()
         self.llm = LLMClient()
-        self.enable_vector_search = settings.enable_vector_search
-        self.vector_timeout_seconds = settings.vector_search_timeout_seconds
-
-    def _get_search(self) -> CatalogSearch:
-        if self.search is None:
-            self.search = CatalogSearch()
-        return self.search
-
-    def _get_vector_store(self) -> VectorStore:
-        if self.vector_store is None:
-            self.vector_store = VectorStore()
-        return self.vector_store
 
     def handle_chat(self, request: ChatRequest) -> ChatResponse:
         latest_user_message = self.extractor.get_latest_user_message(request.messages)
@@ -113,33 +100,28 @@ class ChatAgent:
         # Keyword search
         keyword_items = []
         try:
-            keyword_items = self._get_search().search(query, limit=100)
+            keyword_items = self.search.search(query, limit=100)
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
             keyword_items = []
 
         # Vector search with timeout fallback
         vector_items = []
-        if self.enable_vector_search:
-            try:
-                with ThreadPoolExecutor(max_workers=1) as executor:
-                    future = executor.submit(self._get_vector_store().search, query, 100)
-                    try:
-                        vector_items = future.result(timeout=self.vector_timeout_seconds)
-                    except FuturesTimeoutError as e:
-                        future.cancel()
-                        raise TimeoutError(
-                            f"Vector search took too long ({self.vector_timeout_seconds}s)"
-                        ) from e
+        try:
+            with ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(self.vector_store.search, query, 100)
+                try:
+                    vector_items = future.result(timeout=10)
+                except FuturesTimeoutError as e:
+                    future.cancel()
+                    raise TimeoutError("Vector search took too long (10s)") from e
 
-            except TimeoutError as e:
-                logger.warning(f"Vector search timeout (using keyword search only): {e}")
-                vector_items = []
-            except Exception as e:
-                logger.error(f"Vector search failed: {e}")
-                vector_items = []
-        else:
-            logger.info("Vector search disabled; using keyword search only")
+        except TimeoutError as e:
+            logger.warning(f"Vector search timeout (using keyword search only): {e}")
+            vector_items = []
+        except Exception as e:
+            logger.error(f"Vector search failed: {e}")
+            vector_items = []
 
         # 6. Rank Results
         ranked_items = self.ranker.rank(keyword_items, vector_items, query)
