@@ -100,7 +100,7 @@ class ChatAgent:
         # Keyword search
         keyword_items = []
         try:
-            keyword_items = self.search.search(query, limit=100)
+            keyword_items = self.search.search(query, limit=200)
         except Exception as e:
             logger.error(f"Keyword search failed: {e}")
             keyword_items = []
@@ -109,7 +109,7 @@ class ChatAgent:
         vector_items = []
         try:
             with ThreadPoolExecutor(max_workers=1) as executor:
-                future = executor.submit(self.vector_store.search, query, 100)
+                future = executor.submit(self.vector_store.search, query, 200)
                 try:
                     vector_items = future.result(timeout=10)
                 except FuturesTimeoutError as e:
@@ -127,7 +127,7 @@ class ChatAgent:
         ranked_items = self.ranker.rank(keyword_items, vector_items, query)
 
         # 7. Category-Aware Relevance Filter
-        filtered_items = self.relevance_filter.filter(latest_user_message, ranked_items)
+        filtered_items = self.relevance_filter.filter(latest_user_message, ranked_items, max_results=15)
 
         # 8. Safe Empty Handlers
         if not filtered_items:
@@ -177,7 +177,7 @@ class ChatAgent:
 
         # 10. Packaging final recommendations
         recommendations = []
-        for item in filtered_items:
+        for item in filtered_items[:15]:
             rec_url = item.get("url") or item.get("link", "")
             recommendations.append(
                 Recommendation(

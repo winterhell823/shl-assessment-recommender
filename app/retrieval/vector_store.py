@@ -1,11 +1,13 @@
 import json
 import os
+import threading
 from pathlib import Path
 import numpy as np
 
 # Lazy imports to make server startup fast if vector store is not initialized or used
 _model = None
 _faiss = None
+_model_warmup_started = False
 
 def get_model():
     global _model
@@ -22,6 +24,18 @@ def get_faiss():
     return _faiss
 
 
+def warmup_model():
+    global _model_warmup_started
+    if _model_warmup_started:
+        return
+    _model_warmup_started = True
+    try:
+        model = get_model()
+        model.encode(["warmup"], convert_to_numpy=True)
+    except Exception:
+        pass
+
+
 class VectorStore:
     def __init__(self, index_path: str = "app/data/faiss.index", metadata_path: str = "app/data/faiss_metadata.json"):
         self.index_path = Path(index_path)
@@ -29,6 +43,7 @@ class VectorStore:
         self.index = None
         self.metadata = []
         self._load_store()
+        threading.Thread(target=warmup_model, daemon=True).start()
 
     def _load_store(self):
         if not self.index_path.exists() or not self.metadata_path.exists():

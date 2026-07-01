@@ -44,7 +44,7 @@ class RelevanceFilter:
                 
         return best_category
 
-    def filter(self, query: str, ranked_items: list[dict]) -> list[dict]:
+    def filter(self, query: str, ranked_items: list[dict], max_results: int = 15) -> list[dict]:
         query_lower = query.lower()
         
         # 1. Exact skill list to validate in user query
@@ -88,24 +88,20 @@ class RelevanceFilter:
             if "link" in item and "url" not in item:
                 item["url"] = item["link"]
                 
-            # 3. Strict Skill Verification Check
+            # 3. Relaxed Skill Verification Check
             if active_skills:
-                matches_all_active_skills = True
+                matched_skills = 0
                 for active_skill in active_skills:
                     allowed_terms = allowed_mappings.get(active_skill)
                     if allowed_terms:
-                        term_found = False
                         for term in allowed_terms:
-                            if (term in name_lower or 
-                                term in desc_lower or 
-                                term in skills_lower or 
+                            if (term in name_lower or
+                                term in desc_lower or
+                                term in skills_lower or
                                 term in keywords_lower):
-                                term_found = True
+                                matched_skills += 1
                                 break
-                        if not term_found:
-                            matches_all_active_skills = False
-                            break
-                if not matches_all_active_skills:
+                if matched_skills == 0 and not any(ind in name_lower for ind in ["automata", "coding", "programming", "software", "developer", "engineer", "frontend", "backend", "qa", "test"]):
                     continue
 
             # 4. General personality/ability test requested or matched (always keep)
@@ -162,9 +158,9 @@ class RelevanceFilter:
                     
         # Fallback if filtered list is completely empty
         if not filtered:
-            filtered = ranked_items[:3]
+            filtered = ranked_items[:max_results]
             
-        return filtered[:10]
+        return filtered[:max_results]
 
     def _matches_category(self, item_text: str, category: str) -> bool:
         item_tokens = set(re.findall(r"[a-zA-Z0-9]+", item_text))
