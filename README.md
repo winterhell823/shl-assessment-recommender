@@ -1,124 +1,204 @@
+# SHL Assessment Recommender
+
 # Live Demo 
  https://shl-assessment-recommender-3bw9-dc7mbplz6.vercel.app/ 
+
+ Backend live link for testing : https://shl-assessment-recommender-9czk.onrender.com/docs#/default/chat_api_chat_post  
  
-# SHL Assessment Recommender – Approach Summary
 
-1. Problem Understanding
+An AI-powered conversational assistant that recommends relevant **SHL psychometric assessments** based on hiring requirements. The system combines **Hybrid Retrieval (Keyword + Semantic Search)** with **LLM-powered conversations** to deliver accurate, grounded, and context-aware assessment recommendations.
 
-The objective was to build an AI-powered conversational assistant capable of recommending relevant SHL assessments based on hiring requirements while ensuring all recommendations remain grounded in the official SHL assessment catalog. The system needed to support clarification, recommendation, refinement, and comparison workflows while preventing hallucinations and out-of-scope responses.
+## 🚀 Features
 
-Backend live link for testing : https://shl-assessment-recommender-9czk.onrender.com/docs#/default/chat_api_chat_post 
+- AI-powered conversational interface
+- Hybrid Retrieval (Keyword + FAISS Vector Search)
+- Semantic Search using Sentence Transformers
+- Intent Classification & Clarification Handling
+- Context-aware Recommendation Refinement
+- Assessment Comparison
+- Grounded, Catalog-Only Responses
+- Prompt Injection & Out-of-Scope Guardrails
+- Stateless REST API
 
-2. Design Choices
-I adopted a Retrieval-Augmented Generation (RAG) architecture instead of relying solely on an LLM. Since recommendations must come exclusively from SHL catalog data, retrieval was treated as the source of truth and the LLM was used only for conversational reasoning and response generation.
-Key design decisions:
-Hybrid retrieval combining keyword matching and semantic search.
-Catalog-first architecture to prevent hallucinated assessments.
-Stateless FastAPI backend for scalability.
-Modular pipeline separating retrieval, ranking, intent classification, and response generation.
-Guardrails to enforce SHL-only responses.
-3. Retrieval Setup
-The SHL catalog was processed into structured documents containing:
-Assessment name
-Description
-Assessment type
-Skills measured
-Job role relevance
-SHL catalog URL
-Sentence Transformers were used to generate embeddings for semantic search and stored in a FAISS index. At query time:
-User query is analyzed.
-Keyword retrieval identifies exact matches.
-FAISS semantic retrieval finds conceptually similar assessments.
-Results are combined and ranked.
-Top relevant assessments are provided to the LLM as context.
-This hybrid approach improved retrieval quality compared to either keyword or vector search alone.
-4. Prompt Design
-The system prompt strictly constrained the model to:
-Use only retrieved catalog information.
-Never invent assessments.
-Never generate URLs not present in the catalog.
-Ask clarifying questions when insufficient information is available.
-Refuse unrelated, legal, hiring-advice, or prompt-injection requests.
-The prompt also instructed the model to support:
-Clarification
-Recommendation
-Refinement of existing recommendations
-Assessment comparison
-5. Evaluation Method
-The system was evaluated using:
-Recall@10 – Ability to retrieve relevant assessments.
-Precision@10 – Quality of retrieved recommendations.
-Groundedness Validation – Percentage of responses supported by catalog data.
-Refusal Accuracy – Correct handling of out-of-scope and adversarial queries.
-Retrieval Latency – Time required to retrieve recommendations.
-Evaluation queries covered technical, cognitive, personality, and role-based hiring scenarios.
-6. What Did Not Work
-Several approaches produced suboptimal results:
-Pure Keyword Search
-Keyword-only retrieval missed semantically related terms.
-Example:
-"Banking Analyst"
-"Finance Professional"
-could retrieve different results despite similar intent.
-Overly Aggressive Clarification
-Early versions relied on rigid keyword rules and frequently asked unnecessary follow-up questions, reducing conversational quality and consuming available conversation turns.
-Challenges
-Resource Constraints: Optimized the system for a 512 MB RAM cloud deployment by persisting the FAISS index, reusing embeddings, and minimizing model loading.
-Retrieval Quality: Improved recommendation relevance by combining keyword and semantic search into a hybrid retrieval pipeline.
-Conversational Reliability: Reduced unnecessary clarifications, preserved conversation context, and ensured all recommendations remained grounded in the SHL catalog.
+---
 
+## 🛠 Tech Stack
 
+**Backend**
+- Python
+- FastAPI
 
+**Frontend**
+- Next.js
+- Tailwind CSS
 
+**AI / LLM**
+- Groq API
+- Llama 3.1 8B Instant
 
+**Retrieval**
+- FAISS
+- Sentence Transformers
+- Hybrid Search (Keyword + Vector Search)
 
-
-## Deployment
+**Deployment**
 - Render
 - Vercel
 
 ---
 
-# Evaluation
+## 💡 Conversational Capabilities
 
-- Recall@10
-- Precision@10
-- Groundedness Validation
-- Exact Match Accuracy
-- Refusal Accuracy
+### ✅ Clarification
+Asks follow-up questions when hiring requirements are incomplete.
+
+**Example**
+
+**User:** I need an assessment.
+
+**Assistant:** What role are you hiring for? Which skills or seniority level should the assessment evaluate?
 
 ---
 
-# Local Setup
+### ✅ Recommendations
+Returns **1–10 relevant SHL assessments** including:
 
-## Install Dependencies
+- Assessment Name
+- Brief Description
+- Reason for Recommendation
+- Official SHL Catalog URL
+
+---
+
+### ✅ Recommendation Refinement
+
+The assistant updates recommendations when users modify their requirements instead of restarting the conversation.
+
+**Example**
+
+**User:** Recommend Java Developer assessments.
+
+**User:** Also include personality assessments.
+
+---
+
+### ✅ Assessment Comparison
+
+Supports grounded comparisons between SHL assessments using only catalog information.
+
+**Example**
+
+> Compare OPQ and GSA.
+
+---
+
+## 🛡 Guardrails
+
+The assistant only responds to queries related to SHL assessments and refuses:
+
+- General hiring advice
+- Legal questions
+- Prompt injection attempts
+- Requests outside the SHL assessment catalog
+
+All recommendations and URLs are generated exclusively from the official SHL catalog.
+
+---
+
+## ⚙️ Local Setup
+
+### Install Dependencies
 
 ```bash
 pip install -r requirements.txt
-Add Environment Variables
+```
 
-Create .env:
+### Create `.env`
 
-GROQ_API_KEY=your_key
+```env
+GROQ_API_KEY=your_api_key
 GROQ_MODEL=llama-3.1-8b-instant
-Run Backend
+```
+
+### Run Backend
+
+```bash
 uvicorn app.main:app --reload
-API Endpoints
-Health Check
+```
+
+### Run Frontend
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+---
+
+## 📡 API Endpoints
+
+### Health Check
+
+```http
 GET /health
-Chat Endpoint
+```
+
+### Chat
+
+```http
 POST /chat
+```
 
-Example:
+Example Request
 
+```json
 {
   "messages": [
     {
       "role": "user",
-      "content": "java developer"
+      "content": "Recommend assessments for a Java Backend Developer with Spring Boot experience."
     }
   ]
 }
-Notes
-Recommendations are generated only from SHL catalog data.
-LLM is used for conversational responses only.
+```
+
+---
+
+## 📊 Evaluation
+
+The system was evaluated using:
+
+- Recall@10
+- Precision@10
+- Groundedness Validation
+- Refusal Accuracy
+
+These metrics assess retrieval quality, recommendation relevance, response grounding, and safe handling of out-of-scope requests.
+
+---
+
+## ⚠️ Challenges
+
+- Optimized deployment for a **512 MB RAM** cloud environment by persisting the FAISS index and reusing embeddings.
+- Improved recommendation quality through **hybrid retrieval** combining keyword and semantic search.
+- Reduced unnecessary clarifications while maintaining grounded multi-turn conversations.
+
+---
+
+## 🔮 Future Improvements
+
+- Cross-Encoder Re-ranking
+- Larger Embedding Models
+- Metadata-aware Retrieval
+- Long-term Conversation Memory
+- Streaming Responses
+- Response Caching
+
+---
+
+## 👨‍💻 Author
+
+**Vaibhav Sharma**
+
+Engineering Student | AI & Software Developer
